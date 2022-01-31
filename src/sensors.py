@@ -206,6 +206,21 @@ def get_host_arch():
     except:
         return 'Unknown'
 
+def get_screen_brightness():
+    try:
+        screen_brightness_value = subprocess.check_output(
+                              [
+                                  'bash',
+                                  '-c',
+                                  'cat /sys/class/backlight/rpi_backlight/brightness',
+                              ]
+                          ).decode('utf-8').rstrip()
+        if not screen_brightness_value:
+            screen_brightness_value = '0'
+        return (screen_brightness_value)
+    except:
+        return '0'
+
 # Builds an external drive entry to fix incorrect usage reporting
 def external_drive_base(drive, drive_path) -> dict:
     return {
@@ -335,4 +350,9 @@ sensors = {
                  'icon': 'wifi',
                  'sensor_type': 'sensor',
                  'function': get_wifi_ssid},
+          'screen_brightness': 
+                {'name':'Screen Brightness',
+                 'icon': 'brightness-6',
+                 'sensor_type': 'sensor',
+                 'function': get_screen_brightness},
           }

@@ -137,3 +137,9 @@ Example:
 [maintenance-shield]: https://img.shields.io/maintenance/yes/2020.svg?style=for-the-badge
 [releases-shield]: https://img.shields.io/github/release/sennevds/system_sensors.svg?style=for-the-badge
 [releases]: https://github.com/sennevds/system_sensors/releases
+
+
+
+# Screen Brightness
+
+Listening to MQTT topic `system-sensors/<devicename>/screen_brightness/set`. When a message is received, set the screen brightness to the value contained in the message (just an int).

@@ -9,6 +9,7 @@ import pathlib
 import argparse
 import threading
 import paho.mqtt.client as mqtt
+import psutil
 
 from sensors import * 
 
@@ -18,6 +19,7 @@ global poll_interval
 devicename = None
 settings = {}
 external_drives = []
+screen_brightness_topic = None
 
 class ProgramKilled(Exception):
     pass
@@ -156,6 +158,9 @@ def on_connect(client, userdata, flags, rc):
     if rc == 0:
         write_message_to_console('Connected to broker')
         client.subscribe('hass/status')
+        write_message_to_console("Subscribed to: hass/status")
+        client.subscribe(screen_brightness_topic)
+        write_message_to_console(f"Subscribed to: {screen_brightness_topic}")
         mqttClient.publish(f'system-sensors/sensor/{devicename}/availability', 'online', retain=True)
     elif rc == 5:
         write_message_to_console('Authentication failed.\n Exiting.')
@@ -164,9 +169,19 @@ def on_connect(client, userdata, flags, rc):
         write_message_to_console('Connection failed')
 
 def on_message(client, userdata, message):
-    print (f'Message received: {message.payload.decode()}'  )
-    if(message.payload.decode() == 'online'):
-        send_config_message(client)
+    payload = message.payload.decode()
+    print(f'Message received: {payload}')
+    if message.topic == 'hass/status':
+        if(payload == 'online'):
+            send_config_message(client)
+    if message.topic == screen_brightness_topic:
+        subprocess.check_output(
+            [
+                'bash',
+                '-c',
+                f'echo {int(payload)} > /sys/class/backlight/rpi_backlight/brightness',
+            ]
+        )
 
 
 if __name__ == '__main__':
@@ -197,6 +212,8 @@ if __name__ == '__main__':
 
     devicename = settings['devicename'].replace(' ', '').lower()
     deviceNameDisplay = settings['devicename']
+    
+    screen_brightness_topic = f'system-sensors/{devicename}/screen_brightness/set'
 
     mqttClient = mqtt.Client(client_id=settings['client_id'])
     mqttClient.on_connect = on_connect                      #attach function to callback
